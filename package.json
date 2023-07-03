@@ -22,12 +22,13 @@
     "nodemon": "^2.0.22",
     "pg": "^8.11.0",
     "sequelize": "^6.31.1",
-    "sequelize-cli": "^6.6.0"
+    "sequelize-cli": "^6.6.0",
+    "uuid": "^9.0.0"
   },
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "deploy": "node start.js", 
+    "deploy": "node start.js",
     "db:migrate": "sequelize db:migrate",
     "db:seed": "sequelize db:seed:all",
     "db:drop": "sequelize db:drop",
