@@ -39,7 +39,7 @@ router.post('games.create', '/', async (ctx) => {
     const { game_code, user_name} = ctx.request.body;
 
     // Comprobamos si existe el jugador
-
+    console.log(user_name, game_code);
     // por primary key (id de player)
     // const player = await ctx.orm.Player.findByPk(player_id);
     const user = await ctx.orm.User.findOne({ where: { name: user_name } });
