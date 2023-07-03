@@ -53,7 +53,7 @@ router.post('games.create', '/', async (ctx) => {
 
     // Crear una nueva instancia de Juego
     const game = await ctx.orm.Game.create({ game_code: '1234' });
-
+    console.log(game.game_code);
     // Crear una nueva instancia de Participante con el jugador como creador
     await ctx.orm.Participant.create({
       player_id: player.id,
