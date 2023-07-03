@@ -39,12 +39,12 @@ router.post('games.create', '/', async (ctx) => {
     const { game_code, user_name} = ctx.request.body;
 
     // Comprobamos si existe el jugador
-    console.log("jugador y codio de juego:", user_name, game_code)
+
     // por primary key (id de player)
     // const player = await ctx.orm.Player.findByPk(player_id);
     const user = await ctx.orm.User.findOne({ where: { name: user_name } });
     const player = await ctx.orm.Player.findOne({ where: { user_id: user.id } });
-
+    console.log(user_name);
     if (!player) {
       ctx.body = { error: 'Player not found' };
       ctx.status = 404;
@@ -52,8 +52,8 @@ router.post('games.create', '/', async (ctx) => {
     }
 
     // Crear una nueva instancia de Juego
-    const game = await ctx.orm.Game.create({ game_code: "1234" });
-    console.log("game:", game)
+    const game = await ctx.orm.Game.create({ game_code: game_code });
+
     // Crear una nueva instancia de Participante con el jugador como creador
     await ctx.orm.Participant.create({
       player_id: player.id,

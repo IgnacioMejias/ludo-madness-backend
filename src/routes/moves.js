@@ -62,24 +62,22 @@ router.post('/moves', async (ctx) => {
     }
 
     // Actualiza la posición de la ficha
+    console.log(newPosition);
     if (piece.status !== pieceStatus[3] && piece.status !== pieceStatus[4]) {
       piece.position = newPosition;
+      console.log(piece.position);
       if (piece.position === 0) {
         piece.status = 'home';
       } else if (piece.position === piece.base_position) {
         piece.status = 'safe';
-      } else if (piece.position > piece.enter_position && piece.position < piece.base_position) {
+      } else if (piece.position > piece.enter_position) {
         piece.status = 'finalRow';
         // 5 - (39 - 38 -1) // 5 - 0
-        piece.left_to_finish -= (piece.position - piece.enter_position - 1);
-        piece.position = piece.enter_position;
+        piece.left_to_finish -= (piece.position - piece.enter_position);
         if (piece.left_to_finish === 0) {
           console.log('¡La pieza llegó a la meta!');
           piece.status = 'finished';
         }
-      } else if (piece.position >= 53) {
-        // definir cantidad de casillas en el mapa (sin contar las extra) en .env o en algún lado
-        piece.position -= 52;
       } else {
         piece.status = 'onBoard';
       }
