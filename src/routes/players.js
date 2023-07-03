@@ -13,24 +13,24 @@ const router = new Router();
 */
 router.post('players.create', '/', async (ctx) => {
   try {
-    const existingPlayer = await ctx.orm.Player.findOne({
-      where: {
-        user_id: ctx.request.body.user_id,
-      },
-    });
+    const { user_name } = ctx.request.body;
+    const user = await ctx.orm.User.findOne({ where: { name: user_name } });
+    const existingPlayer = await ctx.orm.Player.findOne({ where: { user_id: user.id } });
 
+
+    /*
     if (existingPlayer) {
       ctx.body = { error: 'Player already exists' };
       ctx.status = 400;
       return;
     }
+    */
     // Crear una nueva instancia de jugador
 
     const player = await ctx.orm.Player.create({
-
       // por ahora se recibe el id del usuario tal cual, pero en el futuro se
       // debería recibir el token y buscar el usuario asociado
-      user_id: ctx.request.body.user_id,
+      user_id: user.id,
       score: 0, // inicializa el puntaje en 0
     });
 

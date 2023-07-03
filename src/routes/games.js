@@ -1,26 +1,27 @@
 const Router = require('koa-router');
+const { route } = require('./authentication');
 
 const router = new Router();
 
 const colors = {
-  1: 'yellow',
+  1: 'red',
   2: 'green',
-  3: 'red',
+  3: 'yellow',
   4: 'blue',
 };
 
 const basePositions = {
   1: 1,
-  2: 14,
-  3: 27,
-  4: 40,
+  2: 15,
+  3: 29,
+  4: 43,
 };
 
 const enterPositions = {
-  1: 51,
-  2: 12,
-  3: 25,
-  4: 38,
+  1: 56,
+  2: 14,
+  3: 28,
+  4: 42,
 };
 
 const pieceStatus = {
@@ -35,15 +36,15 @@ const pieceStatus = {
 // espera recibir el id del usuario que crea el juego, como creator_id
 router.post('games.create', '/', async (ctx) => {
   try {
-    const { userId } = ctx.request.body;
+    const { game_code, user_name} = ctx.request.body;
 
     // Comprobamos si existe el jugador
 
     // por primary key (id de player)
     // const player = await ctx.orm.Player.findByPk(player_id);
-
-    const player = await ctx.orm.Player.findOne({ where: { user_id: userId } });
-
+    const user = await ctx.orm.User.findOne({ where: { name: user_name } });
+    const player = await ctx.orm.Player.findOne({ where: { user_id: user.id } });
+    console.log(user_name);
     if (!player) {
       ctx.body = { error: 'Player not found' };
       ctx.status = 404;
@@ -51,7 +52,7 @@ router.post('games.create', '/', async (ctx) => {
     }
 
     // Crear una nueva instancia de Juego
-    const game = await ctx.orm.Game.create({});
+    const game = await ctx.orm.Game.create({ game_code: game_code });
 
     // Crear una nueva instancia de Participante con el jugador como creador
     await ctx.orm.Participant.create({
@@ -62,7 +63,7 @@ router.post('games.create', '/', async (ctx) => {
       color: 'red', // Esto es un placeholder. El color puede ser seleccionado de alguna otra forma.
     });
 
-    // Creador del juego siempre será amarillo y tendrá como base_position el valor 1
+    // Creador del juego siempre será rojo y tendrá como base_position el valor 1
     // Crea las 4 fichas para este participante
     for (let i = 0; i < 4; i += 1) {
       await ctx.orm.Piece.create({
@@ -74,6 +75,7 @@ router.post('games.create', '/', async (ctx) => {
         status: pieceStatus[0],
         left_to_finish: 5,
         number: i + 1,
+        color: 'red'
       });
     }
 
@@ -100,24 +102,28 @@ router.post('games.create', '/', async (ctx) => {
 
 */
 
+
 // REVISAR Y PROBAR ESTE ENDPOINT
-router.post('/:gameId/participants', async (ctx) => {
+router.post('/:game_code/participants', async (ctx) => {
   try {
     // Obtener el id del juego de la ruta
-    const { gameId } = ctx.params;
+    const { game_code } = ctx.params;
 
     // Obtener el id del jugador del cuerpo de la solicitud
     const { playerId } = ctx.request.body;
-
+    console.log("QUEE");
     // Buscar el juego en la base de datos
-    const game = await ctx.orm.Game.findByPk(gameId);
+    const game = await ctx.orm.Game.findOne({ where: { game_code } });
     if (!game) {
       ctx.body = 'Juego no encontrado';
       ctx.status = 404;
       return;
     }
+    
+    const gameId = game.id;
 
     // Buscar al jugador en la base de datos
+    
     const player = await ctx.orm.Player.findOne({ where: { id: playerId } });
 
     if (!player) {
@@ -161,6 +167,7 @@ router.post('/:gameId/participants', async (ctx) => {
         status: pieceStatus[0],
         left_to_finish: 5,
         number: i + 1,
+        color: color
       });
     }
 
@@ -173,12 +180,41 @@ router.post('/:gameId/participants', async (ctx) => {
   }
 });
 
-// Entrega el estado de un game específico
-router.get('games.show', '/:gameId', async (ctx) => {
+
+// Encuentra el id de un game según el nombre de un usuario:
+// Get the game ID by participant's username
+router.get('games.getGameCode', '/:userName', async (ctx) => {
   try {
-    const { gameId } = ctx.params;
-    const participants = await ctx.orm.Participant.findAll({ where: { game_id: gameId } });
-    const pieces = await ctx.orm.Piece.findAll({ where: { game_id: gameId } });
+    const { userName } = ctx.params;
+    const user = await ctx.orm.User.findOne({ where: { name: userName } });
+    const player = await ctx.orm.Player.findOne({ where: { user_id: user.id } });
+    const participant = await ctx.orm.Participant.findOne({ where: { player_id: player.id } });
+
+    if (!participant) {
+      ctx.body = 'Participant not found';
+      ctx.status = 404;
+      return;
+    }
+
+    const game = await ctx.orm.Game.findOne({ where: { id: participant.game_id } });
+    ctx.body = { gameCode: game.game_code };
+    ctx.status = 200;
+  } catch (error) {
+    
+    ctx.body = error;
+    ctx.status = 400;
+  }
+});
+
+
+// Entrega el estado de un game específico
+router.get('games.show', '/all/:gameCode', async (ctx) => {
+  try {
+    const { gameCode } = ctx.params;
+    
+    const game = await ctx.orm.Game.findOne({ where: { game_code: gameCode } });
+    const participants = await ctx.orm.Participant.findAll({ where: { game_id: game.id } });
+    const pieces = await ctx.orm.Piece.findAll({ where: { game_id: game.id } });
 
     const gameData = {};
 
@@ -207,3 +243,6 @@ router.get('games.show', '/:gameId', async (ctx) => {
 });
 
 module.exports = router;
+
+
+

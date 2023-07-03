@@ -1,18 +1,9 @@
-const {
-  Model,
-} = require('sequelize');
+const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
   class Game extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
     static associate(models) {
-      // define association here
       this.belongsToMany(models.Player, {
-        // cambiar a 'Player'???
         through: 'Participant',
         as: 'players',
         foreignKey: 'game_id',
@@ -24,11 +15,21 @@ module.exports = (sequelize, DataTypes) => {
       });
     }
   }
-  Game.init({
-    winner_id: DataTypes.INTEGER,
-  }, {
-    sequelize,
-    modelName: 'Game',
-  });
+
+  Game.init(
+    {
+      game_code: {
+        type: DataTypes.STRING, // Adjust the data type according to your needs
+        allowNull: false,
+        unique: true,
+      },
+      winner_id: DataTypes.INTEGER,
+    },
+    {
+      sequelize,
+      modelName: 'Game',
+    }
+  );
+
   return Game;
 };

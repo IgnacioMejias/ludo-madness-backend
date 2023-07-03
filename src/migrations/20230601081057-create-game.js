@@ -1,4 +1,3 @@
-/** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('Games', {
@@ -7,6 +6,11 @@ module.exports = {
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
+      },
+      game_code: { // Add the game_code column definition
+        type: Sequelize.STRING, // Adjust the data type according to your needs
+        allowNull: false,
+        unique: true,
       },
       winner_id: {
         type: Sequelize.INTEGER,

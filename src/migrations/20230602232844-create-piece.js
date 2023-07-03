@@ -45,6 +45,9 @@ module.exports = {
         allowNull: false,
         validate: { min: 1, max: 4 },
       },
+      color: {
+        type: Sequelize.STRING,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,

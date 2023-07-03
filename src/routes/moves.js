@@ -20,23 +20,26 @@ const pieceStatus = {
 router.post('/moves', async (ctx) => {
   try {
     // Obtiene el ID del juego desde la ruta
-    const { gameId } = ctx.params;
+    const { gameCode } = ctx.params;
 
     // Obtiene el ID del participante y el ID de la ficha desde el cuerpo de la solicitud
-    const { playerId, pieceId, diceValue } = ctx.request.body;
+    const { userName, pieceNumber, diceValue } = ctx.request.body;
+    const user = await ctx.orm.User.findOne({ where: { name: userName } });
+    const player = await ctx.orm.Player.findOne({ where: { user_id: user.id } });
+    const game = await ctx.orm.Game.findOne({ where: { game_code: gameCode } });
 
     // Encuentra la ficha especificada
     const piece = await ctx.orm.Piece.findOne({
       where: {
-        id: pieceId,
-        player_id: playerId,
-        game_id: gameId,
+        number: pieceNumber,
+        player_id: player.id,
+        game_id: game.id,
       },
     });
 
+    console.log(`moviendo pieza ${pieceNumber}, del player ${userName}, una cantidad ${diceValue}`);
     // Encontramos todas las fichas para trabajar con choques
-    const pieces = await ctx.orm.Piece.findAll({ where: { game_id: gameId } });
-
+    const pieces = await ctx.orm.Piece.findAll({ where: { game_id: game.id } });
     // Si no se encuentra la ficha, envía un error
     if (!piece) {
       ctx.throw(404, 'No se encontró la ficha solicitada.');
@@ -127,7 +130,7 @@ router.post('/moves', async (ctx) => {
 
     // Crea un nuevo movimiento asociado con el participante y el juego
     const move = await ctx.orm.Move.create({
-      player_id: playerId, piece_id: pieceId, position: piece.position, dice_value: diceValue,
+      player_id: player.id, piece_id: piece.id, position: piece.position, dice_value: diceValue,
     });
 
     // Cuerpo de la respuesta
@@ -135,7 +138,7 @@ router.post('/moves', async (ctx) => {
       ctx.body = { piece, move };
       ctx.status = 201;
     } else {
-      const pieceEated = await ctx.orm.Piece.findOne({ where: { id: eatedId, game_id: gameId } });
+      const pieceEated = await ctx.orm.Piece.findOne({ where: { id: eatedId, game_id: game.id } });
       ctx.body = { piece, move, pieceEated };
       ctx.status = 201;
     }

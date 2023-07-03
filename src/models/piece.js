@@ -27,6 +27,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       validate: { min: 1, max: 4 },
     },
+    color: DataTypes.STRING,
   }, {
     sequelize,
     modelName: 'Piece',
