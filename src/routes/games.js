@@ -52,7 +52,7 @@ router.post('games.create', '/', async (ctx) => {
     }
 
     // Crear una nueva instancia de Juego
-    const game = await ctx.orm.Game.create({ game_code: game_code });
+    const game = await ctx.orm.Game.create({ game_code: game_code, player_in_turn: 0 });
 
     // Crear una nueva instancia de Participante con el jugador como creador
     await ctx.orm.Participant.create({
@@ -181,6 +181,38 @@ router.post('/:game_code/participants', async (ctx) => {
 });
 
 
+
+// Cambia el index del jugador
+// REVISAR Y PROBAR ESTE ENDPOINT
+router.post('/:game_code/playerInTurn', async (ctx) => {
+  try {
+    // Obtener el id del juego de la ruta
+    const { game_code } = ctx.params;
+
+    // Obtener el id del jugador del cuerpo de la solicitud
+    const { newIndex } = ctx.request.body;
+    // Buscar el juego en la base de datos
+    const game = await ctx.orm.Game.findOne({ where: { game_code } });
+    if (!game) {
+      ctx.body = 'Juego no encontrado';
+      ctx.status = 404;
+      return;
+    }
+    
+    // Update the player_in_turn of the game
+    game.player_in_turn = newIndex;
+    await game.save();
+
+    // Cuerpo de la respuesta
+    ctx.body = game;
+    ctx.status = 201;
+  } catch (error) {
+    ctx.body = error;
+    ctx.status = 400;
+  }
+});
+
+
 // Encuentra el id de un game según el nombre de un usuario:
 // Get the game ID by participant's username
 router.get('games.getGameCode', '/:userName', async (ctx) => {
@@ -211,14 +243,15 @@ router.get('games.getGameCode', '/:userName', async (ctx) => {
 router.get('games.show', '/all/:gameCode', async (ctx) => {
   try {
     const { gameCode } = ctx.params;
-    
+
     const game = await ctx.orm.Game.findOne({ where: { game_code: gameCode } });
     const participants = await ctx.orm.Participant.findAll({ where: { game_id: game.id } });
     const pieces = await ctx.orm.Piece.findAll({ where: { game_id: game.id } });
 
     const gameData = {};
 
-    participants.forEach((participant, index) => {
+    for (let i = 0; i < participants.length; i++) {
+      const participant = participants[i];
       const playerData = {};
       const playerPieces = pieces.filter((piece) => piece.player_id === participant.player_id);
 
@@ -229,11 +262,18 @@ router.get('games.show', '/all/:gameCode', async (ctx) => {
           // Add more properties as needed
         };
       });
-      gameData[`player${index + 1}`] = playerData;
-    });
+
+      const user = await ctx.orm.User.findByPk(participant.player_id);
+      if (user) {
+        playerData.user_name = user.name; // Add user_name to playerData
+      }
+
+      gameData[`player${i + 1}`] = playerData;
+    }
 
     ctx.body = {
       state: gameData,
+      playerInTurn: game.player_in_turn,
       status: 201,
     };
   } catch (error) {
@@ -241,6 +281,7 @@ router.get('games.show', '/all/:gameCode', async (ctx) => {
     ctx.status = 400;
   }
 });
+
 
 module.exports = router;
 

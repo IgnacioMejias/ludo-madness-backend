@@ -12,6 +12,10 @@ module.exports = {
         allowNull: false,
         unique: true,
       },
+      player_in_turn: { // Add the game_code column definition
+        type: Sequelize.INTEGER, // Adjust the data type according to your needs
+        allowNull: false
+      },
       winner_id: {
         type: Sequelize.INTEGER,
         references: { model: 'Players', key: 'id' },

@@ -24,6 +24,7 @@ module.exports = (sequelize, DataTypes) => {
         unique: true,
       },
       winner_id: DataTypes.INTEGER,
+      player_in_turn: DataTypes.INTEGER,
     },
     {
       sequelize,

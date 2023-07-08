@@ -27,7 +27,7 @@ router.post('/moves', async (ctx) => {
     const user = await ctx.orm.User.findOne({ where: { name: userName } });
     const player = await ctx.orm.Player.findOne({ where: { user_id: user.id } });
     const game = await ctx.orm.Game.findOne({ where: { game_code: gameCode } });
-
+    
     // Encuentra la ficha especificada
     const piece = await ctx.orm.Piece.findOne({
       where: {
@@ -64,24 +64,29 @@ router.post('/moves', async (ctx) => {
     // Actualiza la posición de la ficha
     console.log(newPosition);
     if (piece.status !== pieceStatus[3] && piece.status !== pieceStatus[4]) {
-      piece.position = newPosition;
-      console.log(piece.position);
-      if (piece.position === 0) {
+
+      if (newPosition === 0) {
         piece.status = 'home';
-      } else if (piece.position === piece.base_position) {
+        piece.position = newPosition;
+      } else if (newPosition === piece.base_position) {
         piece.status = 'safe';
-      } else if (piece.position > piece.enter_position) {
+        piece.position = newPosition;
+      } else if (piece.position <= piece.enter_position && newPosition >= piece.enter_position) {
         piece.status = 'finalRow';
-        // 5 - (39 - 38 -1) // 5 - 0
-        piece.left_to_finish -= (piece.position - piece.enter_position);
+        piece.left_to_finish -= (newPosition - piece.enter_position);
+        piece.position = piece.enter_position;
+        if (piece.left_to_finish < 0) {
+          piece.left_to_finish = 0;
+        }
         if (piece.left_to_finish === 0) {
           console.log('¡La pieza llegó a la meta!');
           piece.status = 'finished';
         }
       } else {
+        piece.position = newPosition;
         piece.status = 'onBoard';
       }
-
+      
       pieces.forEach((pieceCheck) => {
         if (pieceCheck.player_id !== piece.player_id) {
           if (pieceCheck.position === piece.position) {
